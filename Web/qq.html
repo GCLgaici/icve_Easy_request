@@ -58,6 +58,7 @@ document.getElementById('sendBtn').addEventListener('click', async ()=>{
     const resUrlDom = document.getElementById('resultUrl');
     const resTextDom = document.getElementById('resText');
 
+    
     if(!auth || !cid){
         alert('Authorization 和 classroom_id 不能为空！');
         return;
