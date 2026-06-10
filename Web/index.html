@@ -2,62 +2,232 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>浏览器网页扫码</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>扫一扫</title>
+    <!-- 引入ZXing库，识别能力远强于jsQR -->
+    <script src="https://unpkg.com/@zxing/library@latest/umd/zxing.min.js"></script>
     <style>
-        * {margin: 0; padding: 0; box-sizing: border-box;}
-        body {padding: 20px; text-align: center;}
-        #video {border: 2px solid #333; max-width: 100%;}
-        #result {margin-top: 20px; font-size: 18px; color: #0066cc; word-break: break-all;}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: system-ui, sans-serif;
+        }
+
+        /* 顶部蓝色导航栏 */
+        .top-bar {
+            height: 60px;
+            background-color: #0058cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .back-btn {
+            position: absolute;
+            left: 16px;
+            color: #fff;
+            font-size: 28px;
+            text-decoration: none;
+        }
+        .top-title {
+            color: #ffffff;
+            font-size: 22px;
+        }
+
+        /* 扫码容器，无红色遮罩 */
+        .scan-container {
+            position: relative;
+            height: calc(100% - 60px);
+            background: #000;
+        }
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 滚动扫描线 */
+        .scan-line {
+            position: absolute;
+            left: 8%;
+            right: 8%;
+            height: 2px;
+            background: #80e0ff;
+            box-shadow: 0 0 8px #80e0ff;
+            animation: scanMove 3s infinite linear;
+            z-index: 2;
+        }
+        @keyframes scanMove {
+            0% { top: 25%; }
+            50% { top: 70%; }
+            100% { top: 25%; }
+        }
+
+        /* 底部按钮组 */
+        .bottom-buttons {
+            position: absolute;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            z-index: 3;
+        }
+        .btn-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+        }
+        .btn-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+        .btn-text {
+            font-size: 16px;
+        }
+
+        /* 扫码结果提示 */
+        #result-box {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 12px;
+            border-radius: 6px;
+            display: none;
+            word-break: break-all;
+            z-index: 10;
+        }
     </style>
-    <!-- 引入jsQR二维码解析库 -->
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </head>
 <body>
-    <h3>摄像头扫码</h3>
-    <video id="video" autoplay playsinline muted></video>
-    <div id="result">等待识别二维码...</div>
+    <div class="top-bar">
+        <a href="javascript:history.back()" class="back-btn">&lt;</a>
+        <div class="top-title">扫一扫</div>
+    </div>
+
+    <div class="scan-container">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="scan-line"></div>
+
+        <div class="bottom-buttons">
+            <div class="btn-item" id="lightBtn">
+                <div class="btn-icon">⚡</div>
+                <div class="btn-text">打开闪光灯</div>
+            </div>
+            <div class="btn-item" id="albumBtn">
+                <div class="btn-icon">🖼</div>
+                <div class="btn-text">相册</div>
+            </div>
+        </div>
+        <div id="result-box"></div>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*" style="display:none;">
 
     <script>
-        const video = document.getElementById('video');
-        const resultDom = document.getElementById('result');
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        let scanLock = false;
+        const { BrowserMultiFormatReader, DecodeHintType } = ZXing;
+        const videoEl = document.getElementById('video');
+        const resultBox = document.getElementById('result-box');
+        let codeReader = null;
+        let scanLocked = false;
+        let mediaStream = null;
+        let torchEnabled = false;
 
-        // 调用摄像头
-        navigator.mediaDevices.getUserMedia({
-            video: {facingMode: 'environment'} // environment后置摄像头，user前置
-        }).then(stream => {
-            video.srcObject = stream;
-            video.addEventListener('loadedmetadata', startScan);
-        }).catch(err => {
-            resultDom.innerText = "摄像头授权失败：" + err.message;
+        // 初始化扫码阅读器，开启多格式解码，容错拉满
+        function initScanner() {
+            codeReader = new BrowserMultiFormatReader();
+            const hints = new Map();
+            // 同时支持二维码、条形码
+            hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+                ZXing.BarcodeFormat.QR_CODE,
+                ZXing.BarcodeFormat.CODE_128
+            ]);
+            hints.set(DecodeHintType.TRY_HARDER, true); // 强力识别模式
+            codeReader.setHints(hints);
+            startCameraScan();
+        }
+
+        // 摄像头实时扫码
+        function startCameraScan() {
+            codeReader.decodeFromVideoDevice(
+                null,
+                videoEl,
+                (result, err) => {
+                    if (scanLocked) return;
+                    // 识别成功
+                    if (result) {
+                        scanLocked = true;
+                        resultBox.style.display = 'block';
+                        resultBox.innerText = '扫码结果：\n' + result.text;
+                    }
+                    // 无二维码时err正常，无需处理
+                }
+            ).then(stream => {
+                mediaStream = stream;
+            });
+        }
+
+        // 相册图片解析
+        document.getElementById('albumBtn').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                // 读取图片二进制解码
+                const imgUrl = URL.createObjectURL(file);
+                const img = new Image();
+                img.src = imgUrl;
+                await new Promise(resolve => img.onload = resolve);
+
+                const result = await codeReader.decodeFromImage(img);
+                if (result) {
+                    resultBox.style.display = 'block';
+                    resultBox.innerText = '相册识别结果：\n' + result.text;
+                } else {
+                    alert('图片中未检测到有效二维码，请重新选择清晰图片');
+                }
+                URL.revokeObjectURL(imgUrl);
+            } catch (err) {
+                alert('图片解析失败：' + err.message);
+            }
         });
 
-        function startScan() {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            scanFrame();
-        }
-
-        function scanFrame() {
-            if (scanLock) {
-                requestAnimationFrame(scanFrame);
-                return;
+        // 闪光灯控制
+        document.getElementById('lightBtn').addEventListener('click', async () => {
+            if (!mediaStream) return;
+            const track = mediaStream.getVideoTracks()[0];
+            try {
+                const cap = track.getCapabilities();
+                if (!cap.torch) {
+                    alert('你的设备摄像头不支持闪光灯');
+                    return;
+                }
+                torchEnabled = !torchEnabled;
+                await track.applyConstraints({ advanced: [{ torch: torchEnabled }] });
+                document.querySelector('#lightBtn .btn-text').innerText = torchEnabled ? '关闭闪光灯' : '打开闪光灯';
+            } catch (e) {
+                alert('闪光灯操作失败');
             }
-            // 截取视频帧
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            // 解析二维码
-            const code = jsQR(imgData.data, canvas.width, canvas.height);
+        });
 
-            if (code) {
-                scanLock = true;
-                resultDom.innerText = "识别结果：\n" + code.data;
-            }
-            requestAnimationFrame(scanFrame);
-        }
+        // 页面退出销毁阅读器
+        window.addEventListener('beforeunload', () => {
+            if (codeReader) codeReader.reset();
+        });
+
+        // 启动
+        initScanner();
     </script>
 </body>
 </html>

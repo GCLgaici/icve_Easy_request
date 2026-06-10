@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浏览器网页扫码</title>
+    <style>
+        * {margin: 0; padding: 0; box-sizing: border-box;}
+        body {padding: 20px; text-align: center;}
+        #video {border: 2px solid #333; max-width: 100%;}
+        #result {margin-top: 20px; font-size: 18px; color: #0066cc; word-break: break-all;}
+    </style>
+    <!-- 引入jsQR二维码解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body>
+    <h3>摄像头扫码</h3>
+    <video id="video" autoplay playsinline muted></video>
+    <div id="result">等待识别二维码...</div>
+
+    <script>
+        const video = document.getElementById('video');
+        const resultDom = document.getElementById('result');
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        let scanLock = false;
+
+        // 调用摄像头
+        navigator.mediaDevices.getUserMedia({
+            video: {facingMode: 'environment'} // environment后置摄像头，user前置
+        }).then(stream => {
+            video.srcObject = stream;
+            video.addEventListener('loadedmetadata', startScan);
+        }).catch(err => {
+            resultDom.innerText = "摄像头授权失败：" + err.message;
+        });
+
+        function startScan() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            scanFrame();
+        }
+
+        function scanFrame() {
+            if (scanLock) {
+                requestAnimationFrame(scanFrame);
+                return;
+            }
+            // 截取视频帧
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            // 解析二维码
+            const code = jsQR(imgData.data, canvas.width, canvas.height);
+
+            if (code) {
+                scanLock = true;
+                resultDom.innerText = "识别结果：\n" + code.data;
+            }
+            requestAnimationFrame(scanFrame);
+        }
+    </script>
+</body>
+</html>
