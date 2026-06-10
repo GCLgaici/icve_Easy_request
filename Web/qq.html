@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>时间戳+接口请求工具</title>
+<style>
+*{box-sizing: border-box;margin:0;padding:0;font-family: system-ui}
+body{padding:20px;max-width:700px;margin:0 auto;}
+.item{margin-bottom:15px;}
+label{display:block;margin-bottom:6px;font-weight:500;}
+input, textarea{
+    width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;
+    font-size:14px;
+}
+textarea{min-height:120px;resize:vertical;}
+button{
+    padding:11px 22px;background:#0052cc;color:#fff;border:none;
+    border-radius:6px;font-size:15px;cursor:pointer;
+}
+#resultUrl{margin:8px 0;color:#0052cc;word-break:break-all;}
+</style>
+</head>
+<body>
+    <div class="item">
+        <label>Authorization：</label>
+        <input type="text" id="authInput" placeholder="粘贴完整Authorization值">
+    </div>
+
+    <div class="item">
+        <label>classroom_id：</label>
+        <input type="text" id="cidInput" placeholder="输入课堂ID">
+    </div>
+
+    <div style="margin:20px 0;">
+        <button id="sendBtn">生成时间戳并发起请求</button>
+    </div>
+
+    <div>
+        <strong>拼接后的完整URL：</strong>
+        <div id="resultUrl"></div>
+    </div>
+
+    <div class="item" style="margin-top:20px;">
+        <label>接口返回内容：</label>
+        <textarea id="resText" readonly placeholder="响应结果会显示在这里..."></textarea>
+    </div>
+
+<script>
+// 获取13位毫秒时间戳
+function get13Timestamp(){
+    return Date.now();
+}
+
+document.getElementById('sendBtn').addEventListener('click', async ()=>{
+    const auth = document.getElementById('authInput').value.trim();
+    const cid = document.getElementById('cidInput').value.trim();
+    const resUrlDom = document.getElementById('resultUrl');
+    const resTextDom = document.getElementById('resText');
+
+    if(!auth || !cid){
+        alert('Authorization 和 classroom_id 不能为空！');
+        return;
+    }
+
+    const ts13 = get13Timestamp();
+    const url = `https://zjy2.icve.com.cn/prod-api/spoc/courseFaceTeachSign/verifyQrCode?id=${cid}&qrCodeNumber=${ts13}`;
+    resUrlDom.textContent = url;
+    resTextDom.value = "请求中...";
+
+    try {
+        const resp = await fetch(url, {
+            method: "GET",
+            headers: {
+                "Authorization": auth
+            }
+        });
+        const txt = await resp.text();
+        resTextDom.value = txt;
+    } catch (err) {
+        resTextDom.value = "请求异常：" + err.message + "\n注意：浏览器存在跨域限制！";
+    }
+})
+</script>
+</body>
+</html>
