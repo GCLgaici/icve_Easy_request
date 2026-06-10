@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>扫一扫</title>
-    <!-- 引入ZXing库，识别能力远强于jsQR -->
-    <script src="https://unpkg.com/@zxing/library@latest/umd/zxing.min.js"></script>
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
         * {
             margin: 0;
@@ -39,7 +38,7 @@
             font-size: 22px;
         }
 
-        /* 扫码容器，无红色遮罩 */
+        /* 扫码容器 无红色遮罩 */
         .scan-container {
             position: relative;
             height: calc(100% - 60px);
@@ -134,100 +133,92 @@
     <input type="file" id="fileInput" accept="image/*" style="display:none;">
 
     <script>
-        const { BrowserMultiFormatReader, DecodeHintType } = ZXing;
         const videoEl = document.getElementById('video');
         const resultBox = document.getElementById('result-box');
-        let codeReader = null;
-        let scanLocked = false;
-        let mediaStream = null;
-        let torchEnabled = false;
+        const fileInput = document.getElementById('fileInput');
 
-        // 初始化扫码阅读器，开启多格式解码，容错拉满
-        function initScanner() {
-            codeReader = new BrowserMultiFormatReader();
+        let codeReader;
+        let scanLocked = false;
+        let activeStream = null;
+        let torchState = false;
+
+        // 初始化ZXing阅读器，强力识别模式
+        function initReader() {
+            codeReader = new ZXing.BrowserMultiFormatReader();
             const hints = new Map();
-            // 同时支持二维码、条形码
-            hints.set(DecodeHintType.POSSIBLE_FORMATS, [
-                ZXing.BarcodeFormat.QR_CODE,
-                ZXing.BarcodeFormat.CODE_128
-            ]);
-            hints.set(DecodeHintType.TRY_HARDER, true); // 强力识别模式
+            hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+            // 只开启二维码解码，减少运算提升速度
+            hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
             codeReader.setHints(hints);
-            startCameraScan();
         }
 
-        // 摄像头实时扫码
+        // 启动摄像头实时扫码
         function startCameraScan() {
-            codeReader.decodeFromVideoDevice(
-                null,
-                videoEl,
-                (result, err) => {
-                    if (scanLocked) return;
-                    // 识别成功
-                    if (result) {
-                        scanLocked = true;
-                        resultBox.style.display = 'block';
-                        resultBox.innerText = '扫码结果：\n' + result.text;
-                    }
-                    // 无二维码时err正常，无需处理
-                }
-            ).then(stream => {
-                mediaStream = stream;
+            codeReader.decodeFromVideoDevice(null, videoEl, (res, err) => {
+                if (scanLocked || !res) return;
+                scanLocked = true;
+                resultBox.style.display = 'block';
+                resultBox.innerText = "扫码结果：\n" + res.text;
+            }).then(stream => {
+                activeStream = stream;
+            }).catch(err => {
+                resultBox.style.display = 'block';
+                resultBox.innerText = "摄像头打开失败：" + err;
             });
         }
 
-        // 相册图片解析
-        document.getElementById('albumBtn').addEventListener('click', () => {
-            document.getElementById('fileInput').click();
-        });
-        document.getElementById('fileInput').addEventListener('change', async (e) => {
+        // 相册图片识别
+        fileInput.addEventListener('change', async function (e) {
             const file = e.target.files[0];
             if (!file) return;
+            // 重置锁定状态
+            scanLocked = false;
+            resultBox.style.display = 'none';
+
             try {
-                // 读取图片二进制解码
                 const imgUrl = URL.createObjectURL(file);
                 const img = new Image();
                 img.src = imgUrl;
                 await new Promise(resolve => img.onload = resolve);
 
-                const result = await codeReader.decodeFromImage(img);
-                if (result) {
+                const res = await codeReader.decodeFromImage(img);
+                if (res) {
                     resultBox.style.display = 'block';
-                    resultBox.innerText = '相册识别结果：\n' + result.text;
+                    resultBox.innerText = "相册识别结果：\n" + res.text;
                 } else {
-                    alert('图片中未检测到有效二维码，请重新选择清晰图片');
+                    alert("图片内未识别到有效二维码，请更换清晰图片");
                 }
                 URL.revokeObjectURL(imgUrl);
             } catch (err) {
-                alert('图片解析失败：' + err.message);
+                alert("图片解析异常：" + err.message);
             }
-        });
+            // 清空file，重复选择同一张图片可再次触发
+            fileInput.value = "";
+        })
 
-        // 闪光灯控制
+        // 闪光灯开关
         document.getElementById('lightBtn').addEventListener('click', async () => {
-            if (!mediaStream) return;
-            const track = mediaStream.getVideoTracks()[0];
-            try {
-                const cap = track.getCapabilities();
-                if (!cap.torch) {
-                    alert('你的设备摄像头不支持闪光灯');
-                    return;
-                }
-                torchEnabled = !torchEnabled;
-                await track.applyConstraints({ advanced: [{ torch: torchEnabled }] });
-                document.querySelector('#lightBtn .btn-text').innerText = torchEnabled ? '关闭闪光灯' : '打开闪光灯';
-            } catch (e) {
-                alert('闪光灯操作失败');
-            }
-        });
+            if (!activeStream) return alert("摄像头未开启");
+            const videoTrack = activeStream.getVideoTracks()[0];
+            const cap = videoTrack.getCapabilities();
+            if (!cap.torch) return alert("该设备不支持闪光灯");
 
-        // 页面退出销毁阅读器
-        window.addEventListener('beforeunload', () => {
+            torchState = !torchState;
+            await videoTrack.applyConstraints({
+                advanced: [{ torch: torchState }]
+            });
+            document.querySelector('#lightBtn .btn-text').innerText = torchState ? "关闭闪光灯" : "打开闪光灯";
+        })
+
+        // 页面卸载释放资源
+        window.onbeforeunload = () => {
             if (codeReader) codeReader.reset();
-        });
+            if (activeStream) activeStream.getTracks().forEach(t => t.stop());
+        }
 
-        // 启动
-        initScanner();
+        // 程序入口
+        initReader();
+        startCameraScan();
     </script>
 </body>
 </html>
