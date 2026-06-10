@@ -58,11 +58,12 @@ document.getElementById('sendBtn').addEventListener('click', async ()=>{
     const resUrlDom = document.getElementById('resultUrl');
     const resTextDom = document.getElementById('resText');
 
-    
+
     if(!auth || !cid){
         alert('Authorization 和 classroom_id 不能为空！');
         return;
     }
+
 
     const ts13 = get13Timestamp();
     const url = `https://zjy2.icve.com.cn/prod-api/spoc/courseFaceTeachSign/verifyQrCode?id=${cid}&qrCodeNumber=${ts13}`;
@@ -82,6 +83,7 @@ document.getElementById('sendBtn').addEventListener('click', async ()=>{
         resTextDom.value = "请求异常：" + err.message + "\n注意：浏览器存在跨域限制！";
     }
 })
+
 </script>
 </body>
 </html>

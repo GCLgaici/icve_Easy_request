@@ -100,7 +100,7 @@ def scan_to_check_in(_authorization, classroom_id):
     print(url)
     res = requests.get(url, headers=headers)
     print(res.text)
-    ...
+
 
 if __name__ == '__main__':
     # dl_sj = login_random()
