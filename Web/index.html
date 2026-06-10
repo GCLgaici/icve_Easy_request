@@ -1,224 +1,132 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>扫一扫</title>
-    <script src="https://unpkg.com/@zxing/library@latest"></script>
+<!-- 声明文档使用的字符编码 -->
+    <meta charset='utf-8'>
+    <!-- 优先使用 IE 最新版本和 Chrome -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+   <!-- 页面描述 -->
+    <meta name="description" content="不超过150个字符"/>
+    <!-- 页面关键词 -->
+    <meta name="keywords" content=""/>
+    <!-- 网页作者 -->
+    <meta name="author" content="name, email@gmail.com"/>
+    <!-- 搜索引擎抓取 -->
+    <meta name="robots" content="index,follow"/>
+    <!-- 为移动设备添加 viewport -->
+     <meta name="viewport" content="initial-scale=1, maximum-scale=3, minimum-scale=1, user-scalable=no">
+    <!-- `width=device-width` 会导致 iPhone 5 添加到主屏后以 WebApp 全屏模式打开页面时出现黑边 http://bigc.at/ios-webapp-viewport-meta.orz -->
+ 
+    <!-- iOS 设备 begin -->
+    <meta name="apple-mobile-web-app-title" content="标题">
+    <!-- 添加到主屏后的标题（iOS 6 新增） -->
+   <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <!-- 是否启用 WebApp 全屏模式，删除苹果默认的工具栏和菜单栏 -->
+  
+   <meta name="apple-itunes-app" content="app-id=myAppStoreID, affiliate-data=myAffiliateData, app-argument=myURL">
+    <!-- 添加智能 App 广告条 Smart App Banner（iOS 6+ Safari） -->
+     <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+    <!-- 设置苹果工具栏颜色 -->
+     <meta name="format-detection" content="telphone=no, email=no"/>
+     <!-- 忽略页面中的数字识别为电话，忽略email识别 -->
+     <!-- 启用360浏览器的极速模式(webkit) -->
+     <meta name="renderer" content="webkit">
+    <!-- 避免IE使用兼容模式 -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+     <!-- 针对手持设备优化，主要是针对一些老的不识别viewport的浏览器，比如黑莓 -->
+     <meta name="HandheldFriendly" content="true">
+     <!-- 微软的老式浏览器 -->
+     <meta name="MobileOptimized" content="320">
+     <!-- uc强制竖屏 -->
+     <meta name="screen-orientation" content="portrait">
+     <!-- QQ强制竖屏 -->
+     <meta name="x5-orientation" content="portrait">
+     <!-- UC强制全屏 -->
+     <meta name="full-screen" content="yes">
+    <!-- QQ强制全屏 -->
+     <meta name="x5-fullscreen" content="true">
+     <!-- UC应用模式 -->
+    <meta name="browsermode" content="application">
+     <!-- QQ应用模式 -->
+     <meta name="x5-page-mode" content="app">
+     <!-- windows phone 点击无高光 -->
+     <meta name="msapplication-tap-highlight" content="no">
+    <!-- iOS 图标 begin -->
+     <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-57x57-precomposed.png"/>
+     <!-- iPhone 和 iTouch，默认 57x57 像素，必须有 -->
+    <!-- <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/apple-touch-icon-114x114-precomposed.png"/> -->
+     <!-- Retina iPhone 和 Retina iTouch，114x114 像素，可以没有，但推荐有 -->
+     <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144x144-precomposed.png"/>
+     <!-- Retina iPad，144x144 像素，可以没有，但推荐有 -->
+     <!-- iOS 图标 end -->
+ 
+     <!-- iOS 启动画面 begin -->
+     <link rel="apple-touch-startup-image" sizes="768x1004" href="/splash-screen-768x1004.png"/>
+     <!-- iPad 竖屏 768 x 1004（标准分辨率） -->
+     <link rel="apple-touch-startup-image" sizes="1536x2008" href="/splash-screen-1536x2008.png"/>
+     <!-- iPad 竖屏 1536x2008（Retina） -->
+     <link rel="apple-touch-startup-image" sizes="1024x748" href="/Default-Portrait-1024x748.png"/>
+     <!-- iPad 横屏 1024x748（标准分辨率） -->
+    <link rel="apple-touch-startup-image" sizes="2048x1496" href="/splash-screen-2048x1496.png"/>
+     <!-- iPad 横屏 2048x1496（Retina） -->
+ 
+     <link rel="apple-touch-startup-image" href="/splash-screen-320x480.png"/>
+    <!-- iPhone/iPod Touch 竖屏 320x480 (标准分辨率) -->
+    <link rel="apple-touch-startup-image" sizes="640x960" href="/splash-screen-640x960.png"/>
+    <!-- iPhone/iPod Touch 竖屏 640x960 (Retina) -->
+     <link rel="apple-touch-startup-image" sizes="640x1136" href="/splash-screen-640x1136.png"/>
+     <!-- iPhone 5/iPod Touch 5 竖屏 640x1136 (Retina) -->
+     <!-- iOS 启动画面 end -->
+ 
+     <!-- iOS 设备 end -->
+     <meta name="msapplication-TileColor" content="#000"/>
+     <!-- Windows 8 磁贴颜色 -->
+    <meta name="msapplication-TileImage" content="icon.png"/>
+     <!-- Windows 8 磁贴图标 -->
+  
+     <link rel="alternate" type="application/rss+xml" title="RSS" href="/rss.xml"/>
+     <!-- 添加 RSS 订阅 -->
+    <link rel="shortcut icon" type="image/ico" href="/favicon.ico"/>
+     <!-- 添加 favicon icon -->
+  <!-- 引入样式 -->
+<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+<!-- 引入组件库 -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+     <title>員工健康掃碼</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html, body {
-            height: 100%;
-            overflow: hidden;
-            font-family: system-ui, sans-serif;
-        }
-
-        /* 顶部蓝色导航栏 */
-        .top-bar {
-            height: 60px;
-            background-color: #0058cc;
-            display: flex;
-            align-items: center;
+        .myindex{
+            height: 11rem;
+            display:flex;
             justify-content: center;
-            position: relative;
+            align-items:center;
         }
-        .back-btn {
-            position: absolute;
-            left: 16px;
-            color: #fff;
-            font-size: 28px;
-            text-decoration: none;
-        }
-        .top-title {
-            color: #ffffff;
-            font-size: 22px;
-        }
+        #myclick{
+            color:black;
+            text-align: center;
 
-        /* 扫码容器 无红色遮罩 */
-        .scan-container {
-            position: relative;
-            height: calc(100% - 60px);
-            background: #000;
         }
-        #video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* 滚动扫描线 */
-        .scan-line {
-            position: absolute;
-            left: 8%;
-            right: 8%;
-            height: 2px;
-            background: #80e0ff;
-            box-shadow: 0 0 8px #80e0ff;
-            animation: scanMove 3s infinite linear;
-            z-index: 2;
-        }
-        @keyframes scanMove {
-            0% { top: 25%; }
-            50% { top: 70%; }
-            100% { top: 25%; }
-        }
-
-        /* 底部按钮组 */
-        .bottom-buttons {
-            position: absolute;
-            bottom: 80px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-around;
-            z-index: 3;
-        }
-        .btn-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #fff;
-        }
-        .btn-icon {
-            font-size: 36px;
-            margin-bottom: 8px;
-        }
-        .btn-text {
-            font-size: 16px;
-        }
-
-        /* 扫码结果提示 */
-        #result-box {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.7);
-            color: #fff;
-            padding: 12px;
-            border-radius: 6px;
-            display: none;
-            word-break: break-all;
-            z-index: 10;
+        #myclick .myfont{
+            line-height: 2.5rem;
+            width: 10rem;
+            color: black;
+            text-align: center;
+            background-color: #eff3f4;
         }
     </style>
 </head>
 <body>
-    <div class="top-bar">
-        <a href="javascript:history.back()" class="back-btn">&lt;</a>
-        <div class="top-title">扫一扫</div>
-    </div>
-
-    <div class="scan-container">
-        <video id="video" autoplay playsinline muted></video>
-        <div class="scan-line"></div>
-
-        <div class="bottom-buttons">
-            <div class="btn-item" id="lightBtn">
-                <div class="btn-icon">⚡</div>
-                <div class="btn-text">打开闪光灯</div>
-            </div>
-            <div class="btn-item" id="albumBtn">
-                <div class="btn-icon">🖼</div>
-                <div class="btn-text">相册</div>
-            </div>
+    <div class="myindex">
+        <div id="myclick">
+            <div class="myfont">點擊掃碼</div>
         </div>
-        <div id="result-box"></div>
     </div>
-
-    <input type="file" id="fileInput" accept="image/*" style="display:none;">
-
     <script>
-        const videoEl = document.getElementById('video');
-        const resultBox = document.getElementById('result-box');
-        const fileInput = document.getElementById('fileInput');
-
-        let codeReader;
-        let scanLocked = false;
-        let activeStream = null;
-        let torchState = false;
-
-        // 初始化ZXing阅读器，强力识别模式
-        function initReader() {
-            codeReader = new ZXing.BrowserMultiFormatReader();
-            const hints = new Map();
-            hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-            // 只开启二维码解码，减少运算提升速度
-            hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
-            codeReader.setHints(hints);
+        
+        const myclick = document.getElementById('myclick');
+        myclick.onclick = function gosuccessful() {
+            window.location.href = './qr-scanner-master/demo/index.html'
+            // window.location.href = './mysuccessful.html'
         }
-
-        // 启动摄像头实时扫码
-        function startCameraScan() {
-            codeReader.decodeFromVideoDevice(null, videoEl, (res, err) => {
-                if (scanLocked || !res) return;
-                scanLocked = true;
-                resultBox.style.display = 'block';
-                resultBox.innerText = "扫码结果：\n" + res.text;
-            }).then(stream => {
-                activeStream = stream;
-            }).catch(err => {
-                resultBox.style.display = 'block';
-                resultBox.innerText = "摄像头打开失败：" + err;
-            });
-        }
-
-        // 相册图片识别
-        fileInput.addEventListener('change', async function (e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            // 重置锁定状态
-            scanLocked = false;
-            resultBox.style.display = 'none';
-
-            try {
-                const imgUrl = URL.createObjectURL(file);
-                const img = new Image();
-                img.src = imgUrl;
-                await new Promise(resolve => img.onload = resolve);
-
-                const res = await codeReader.decodeFromImage(img);
-                if (res) {
-                    resultBox.style.display = 'block';
-                    resultBox.innerText = "相册识别结果：\n" + res.text;
-                } else {
-                    alert("图片内未识别到有效二维码，请更换清晰图片");
-                }
-                URL.revokeObjectURL(imgUrl);
-            } catch (err) {
-                alert("图片解析异常：" + err.message);
-            }
-            // 清空file，重复选择同一张图片可再次触发
-            fileInput.value = "";
-        })
-
-        // 闪光灯开关
-        document.getElementById('lightBtn').addEventListener('click', async () => {
-            if (!activeStream) return alert("摄像头未开启");
-            const videoTrack = activeStream.getVideoTracks()[0];
-            const cap = videoTrack.getCapabilities();
-            if (!cap.torch) return alert("该设备不支持闪光灯");
-
-            torchState = !torchState;
-            await videoTrack.applyConstraints({
-                advanced: [{ torch: torchState }]
-            });
-            document.querySelector('#lightBtn .btn-text').innerText = torchState ? "关闭闪光灯" : "打开闪光灯";
-        })
-
-        // 页面卸载释放资源
-        window.onbeforeunload = () => {
-            if (codeReader) codeReader.reset();
-            if (activeStream) activeStream.getTracks().forEach(t => t.stop());
-        }
-
-        // 程序入口
-        initReader();
-        startCameraScan();
     </script>
 </body>
 </html>

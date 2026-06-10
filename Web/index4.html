@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>扫一扫</title>
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: system-ui, sans-serif;
+        }
+
+        /* 顶部蓝色导航栏 */
+        .top-bar {
+            height: 60px;
+            background-color: #0058cc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .back-btn {
+            position: absolute;
+            left: 16px;
+            color: #fff;
+            font-size: 28px;
+            text-decoration: none;
+        }
+        .top-title {
+            color: #ffffff;
+            font-size: 22px;
+        }
+
+        /* 扫码容器 无红色遮罩 */
+        .scan-container {
+            position: relative;
+            height: calc(100% - 60px);
+            background: #000;
+        }
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 滚动扫描线 */
+        .scan-line {
+            position: absolute;
+            left: 8%;
+            right: 8%;
+            height: 2px;
+            background: #80e0ff;
+            box-shadow: 0 0 8px #80e0ff;
+            animation: scanMove 3s infinite linear;
+            z-index: 2;
+        }
+        @keyframes scanMove {
+            0% { top: 25%; }
+            50% { top: 70%; }
+            100% { top: 25%; }
+        }
+
+        /* 底部按钮组 */
+        .bottom-buttons {
+            position: absolute;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            z-index: 3;
+        }
+        .btn-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+        }
+        .btn-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+        .btn-text {
+            font-size: 16px;
+        }
+
+        /* 扫码结果提示 */
+        #result-box {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 12px;
+            border-radius: 6px;
+            display: none;
+            word-break: break-all;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="javascript:history.back()" class="back-btn">&lt;</a>
+        <div class="top-title">扫一扫</div>
+    </div>
+
+    <div class="scan-container">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="scan-line"></div>
+
+        <div class="bottom-buttons">
+            <div class="btn-item" id="lightBtn">
+                <div class="btn-icon">⚡</div>
+                <div class="btn-text">打开闪光灯</div>
+            </div>
+            <div class="btn-item" id="albumBtn">
+                <div class="btn-icon">🖼</div>
+                <div class="btn-text">相册</div>
+            </div>
+        </div>
+        <div id="result-box"></div>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+
+    <script>
+        const videoEl = document.getElementById('video');
+        const resultBox = document.getElementById('result-box');
+        const fileInput = document.getElementById('fileInput');
+
+        let codeReader;
+        let scanLocked = false;
+        let activeStream = null;
+        let torchState = false;
+
+        // 初始化ZXing阅读器，强力识别模式
+        function initReader() {
+            codeReader = new ZXing.BrowserMultiFormatReader();
+            const hints = new Map();
+            hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+            // 只开启二维码解码，减少运算提升速度
+            hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.QR_CODE]);
+            codeReader.setHints(hints);
+        }
+
+        // 启动摄像头实时扫码
+        function startCameraScan() {
+            codeReader.decodeFromVideoDevice(null, videoEl, (res, err) => {
+                if (scanLocked || !res) return;
+                scanLocked = true;
+                resultBox.style.display = 'block';
+                resultBox.innerText = "扫码结果：\n" + res.text;
+            }).then(stream => {
+                activeStream = stream;
+            }).catch(err => {
+                resultBox.style.display = 'block';
+                resultBox.innerText = "摄像头打开失败：" + err;
+            });
+        }
+
+        // 相册图片识别
+        fileInput.addEventListener('change', async function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            // 重置锁定状态
+            scanLocked = false;
+            resultBox.style.display = 'none';
+
+            try {
+                const imgUrl = URL.createObjectURL(file);
+                const img = new Image();
+                img.src = imgUrl;
+                await new Promise(resolve => img.onload = resolve);
+
+                const res = await codeReader.decodeFromImage(img);
+                if (res) {
+                    resultBox.style.display = 'block';
+                    resultBox.innerText = "相册识别结果：\n" + res.text;
+                } else {
+                    alert("图片内未识别到有效二维码，请更换清晰图片");
+                }
+                URL.revokeObjectURL(imgUrl);
+            } catch (err) {
+                alert("图片解析异常：" + err.message);
+            }                                                                        
+            // 清空file，重复选择同一张图片可再次触发
+            fileInput.value = "";
+        })
+
+        // 闪光灯开关
+        document.getElementById('lightBtn').addEventListener('click', async () => {
+            if (!activeStream) return alert("摄像头未开启");
+            const videoTrack = activeStream.getVideoTracks()[0];
+            const cap = videoTrack.getCapabilities();
+            if (!cap.torch) return alert("该设备不支持闪光灯");
+
+            torchState = !torchState;
+            await videoTrack.applyConstraints({
+                advanced: [{ torch: torchState }]
+            });
+            document.querySelector('#lightBtn .btn-text').innerText = torchState ? "关闭闪光灯" : "打开闪光灯";
+        })
+
+        // 页面卸载释放资源
+        window.onbeforeunload = () => {
+            if (codeReader) codeReader.reset();
+            if (activeStream) activeStream.getTracks().forEach(t => t.stop());
+        }
+
+        // 程序入口
+        initReader();
+        startCameraScan();
+    </script>
+</body>
+</html>
