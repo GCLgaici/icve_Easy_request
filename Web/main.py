@@ -2,7 +2,7 @@ import json
 import time
 from flask import Flask, request, jsonify, send_from_directory, render_template, redirect
 from flask_sock import Sock
-from Web.requests_ICVE import get_authorization,get_classroom_list,get_userinfo
+from Web.requests_ICVE import get_authorization,get_classroom_list,get_userinfo,get_course_detail_list, scan_to_check_in
 
 
 # Todo 1. 客户端断开自动重连，连接失败自动重新注册
@@ -91,35 +91,59 @@ def home():
     exists = False
     for course in user_data_list:
         if course["student_id"] == receive_student_id:
+
             if not receive_token in course["token"]:
                 print("不在里面")
                 course["token"].append(receive_token)
             else:
                 print("在里面了")
+
             exists = True
             break  # 找到直接跳出循环，不用继续遍历
+
     if not exists:
         user_data_list.append(data)
-    print(exists)
     with open(f"DATA/userinfo{time.time()}.json", "w", encoding="utf-8") as f:
         json.dump(user_data_list, f, ensure_ascii=False, indent=4)
-    print(user_data_list)
+    # print(user_data_list)
 
 
 
 
-    if not receive_token:
-        ...
+    authorization = get_authorization(receive_token)
 
-    return "你已被拉黑"
+    course_list =  get_classroom_list(authorization, 100)
 
-
-    # return render_template(
-    #     "home.html",
-    #     token=receive_token,
-    #     course_list=course_list
-    # )
+    # print(course_list)
+    return render_template(
+        "home.html",
+        token=receive_token,
+        authorization=authorization,
+        course_list=course_list
+    )
     ...
+
+
+@app.route('/course/detail', methods=['POST'])
+def course_detail():
+    """课程详情"""
+    # print(request.form.to_dict())
+    authorization = request.form.get("authorization")
+    wy_id = request.form.get("course_id")
+    lb = get_course_detail_list(authorization, wy_id)
+
+    return render_template("course_detail.html", activity_list=lb, authorization=authorization)
+
+
+@app.route('/QR_code/check_in', methods=['POST'])
+def QR_code_check_in():
+    """二维码签到"""
+    print(request.form.to_dict())
+    authorization = request.form.get("authorization")
+    activity_id = request.form.get("activity_id")
+    jg = scan_to_check_in(authorization, activity_id)
+    print(jg)
+    return "<h1>签到完成</h1><br><hr><h1>" + str(jg)+"</h2>"
 
 
 

@@ -156,8 +156,7 @@
     {% if course_list and course_list|length > 0 %}
     <div class="course-grid">
         {% for item in course_list %}
-
-            <div class="course-card">
+        <div class="course-card">
             <div class="course-name">{{ item.courseName }}</div>
             <div class="info-line">
                 <span class="info-label">课堂标题：</span>
@@ -187,30 +186,11 @@
                 <span class="info-label">配套资源数：</span>
                 <span class="info-val">{{ item.resourceCount }}</span>
             </div>
-<!--            <div class="info-line">-->
-<!--                <span class="info-label">课程唯一ID：</span>-->
-<!--                <span class="info-val">{{ item.courseId }}</span>-->
-<!--            </div>-->
-
-            <!-- POST提交表单，传递课程id -->
-            <form action="/course/detail" method="POST" style="margin-top:22px;text-align:center;">
-                <!-- 隐藏域携带当前课程id -->
-                <input type="hidden" name="authorization" value="{{ authorization }}">
-                <!-- 隐藏域携带当前课程id -->
-                <input type="hidden" name="course_id" value="{{ item.id }}">
-                <!-- 进入提交按钮 -->
-                <button type="submit" style="
-                    padding: 10px 32px;
-                    background: #4158D0;
-                    color: #fff;
-                    border: none;
-                    border-radius: 8px;
-                    font-size: 15px;
-                    cursor: pointer;
-                ">进入课堂</button>
-            </form>
-    </div>
-
+            <div class="info-line">
+                <span class="info-label">课程唯一ID：</span>
+                <span class="info-val">{{ item.courseId }}</span>
+            </div>
+        </div>
         {% endfor %}
     </div>
     {% else %}
