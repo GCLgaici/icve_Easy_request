@@ -99,10 +99,10 @@
 <!--                <span class="info-label">授课ID：</span>-->
 <!--                <span class="info-val">{{ item.teachId }}</span>-->
 <!--            </div>-->
-<!--            <div class="info-line">-->
-<!--                <span class="info-label">活动ID：</span>-->
-<!--                <span class="info-val">{{ item.activityId }}</span>-->
-<!--            </div>-->
+            <div class="info-line">
+                <span class="info-label">活动ID：</span>
+                <span class="info-val">{{ item.activityId }}</span>
+            </div>
             <div class="info-line">
                 <span class="info-label">活动类型ID：</span>
                 <span class="info-val">{{ item.activityTypeId }}</span>
@@ -146,7 +146,7 @@
                 <span class="info-val">{{ item.courseInfoId }}</span>
             </div>
 
-
+            <!--  disabled          -->
             {% if item.activityTypeId == 2 %}
                 <form action="/QR_code/check_in" method="POST" class="form-box">
                     <input type="hidden" name="authorization" value="{{ authorization }}">
@@ -154,7 +154,7 @@
                     <button
                         type="submit"
                         class="submit-btn"
-<!--                        {% if item.participationTime %}disabled{% endif %}-->
+                        {% if item.participationTime %}{% endif %}
                         style="
                             padding: 10px 32px;
                             background: #4158D0;

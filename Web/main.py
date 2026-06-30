@@ -13,10 +13,16 @@ from Web.requests_ICVE import get_authorization,get_classroom_list,get_userinfo,
 app = Flask(__name__)
 sock = Sock(app)
 HOST = '0.0.0.0'
-PORT = 8080
+PORT = 8989
 gw_url = "https://icve.052024.xyz"
 token_red_url = f"https://sso.icve.com.cn/sso/auth?mode=simple&source=2&redirect={gw_url}"
-user_data_list = []
+
+
+# user_data_list = []
+# 加载用户数据
+with open("DATA/userinfo1782827419.302329.json", "r", encoding="utf-8") as f:
+    user_data_list = json.load(f)
+    print(user_data_list)
 
 # ================================ 工具 ================================
 
@@ -74,6 +80,7 @@ def login():
 
 @app.route('/home', methods=['POST'])
 def home():
+    print(request.form.to_dict())
     receive_token = request.form.get("token")
     receive_mobile = request.form.get("mobile")
     receive_school_name = request.form.get("school_name")
@@ -103,7 +110,7 @@ def home():
 
     if not exists:
         user_data_list.append(data)
-    with open(f"DATA/userinfo{time.time()}.json", "w", encoding="utf-8") as f:
+    with open(f"DATA/userinfo.json", "w", encoding="utf-8") as f:
         json.dump(user_data_list, f, ensure_ascii=False, indent=4)
     # print(user_data_list)
 
@@ -112,7 +119,7 @@ def home():
 
     authorization = get_authorization(receive_token)
 
-    course_list =  get_classroom_list(authorization, 100)
+    course_list =  get_classroom_list(authorization, 200)
 
     # print(course_list)
     return render_template(
@@ -136,7 +143,7 @@ def course_detail():
 
 
 @app.route('/QR_code/check_in', methods=['POST'])
-def QR_code_check_in():
+def qr_code_check_in():
     """二维码签到"""
     print(request.form.to_dict())
     authorization = request.form.get("authorization")
