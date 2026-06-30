@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程管理主页</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #4158D0 0%, #C850C0 100%);
+            padding: 30px 16px;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+        /* 顶部表单卡片 */
+        .form-card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 36px 32px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+            margin-bottom: 36px;
+        }
+        .page-title {
+            text-align: center;
+            font-size: 26px;
+            color: #222;
+            margin-bottom: 32px;
+            font-weight: 600;
+        }
+        .form-item {
+            margin-bottom: 24px;
+        }
+        .form-item label {
+            display: block;
+            font-size: 15px;
+            color: #444;
+            margin-bottom: 9px;
+        }
+        .input-box, .select-box {
+            width: 100%;
+            height: 48px;
+            padding: 0 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: 0.25s all ease;
+            outline: none;
+        }
+        .input-box:focus, .select-box:focus {
+            border-color: #4158D0;
+            box-shadow: 0 0 0 4px rgba(65, 88, 208, 0.15);
+        }
+        /* Token只读样式 */
+        .token-input {
+            background-color: #f6f7f9;
+            color: #808690;
+            cursor: not-allowed;
+        }
+        .btn-row {
+            display: flex;
+            gap: 14px;
+            margin-top: 8px;
+        }
+        button {
+            flex: 1;
+            height: 50px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:hover {
+            opacity: 0.92;
+        }
+        .submit-btn {
+            background: #4158D0;
+            color: #fff;
+        }
+        .reset-btn {
+            background: #eceef2;
+            color: #333;
+        }
+        .flash-tip {
+            text-align: center;
+            padding: 12px;
+            margin-bottom: 18px;
+            border-radius: 10px;
+            background: #e8f0ff;
+            color: #2552b9;
+        }
+        /* 课程列表区域 */
+        .list-head {
+            color: #fff;
+            font-size: 23px;
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
+            gap: 24px;
+        }
+        .course-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 26px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            transition: transform 0.25s ease;
+        }
+        .course-card:hover {
+            transform: translateY(-6px);
+        }
+        .course-name {
+            font-size: 19px;
+            font-weight: bold;
+            color: #4158D0;
+            margin-bottom: 14px;
+            line-height: 1.4;
+        }
+        .info-line {
+            display: flex;
+            margin: 10px 0;
+            font-size: 14.5px;
+        }
+        .info-label {
+            width: 100px;
+            color: #707783;
+        }
+        .info-val {
+            flex: 1;
+            color: #2d2d2d;
+            word-break: break-all;
+        }
+        .empty-data {
+            color: #fff;
+            text-align: center;
+            font-size: 17px;
+            padding: 60px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- 课程列表渲染区域 -->
+    <h3 class="list-head">我的课堂课程列表</h3>
+    {% if course_list and course_list|length > 0 %}
+    <div class="course-grid">
+        {% for item in course_list %}
+        <div class="course-card">
+            <div class="course-name">{{ item.courseName }}</div>
+            <div class="info-line">
+                <span class="info-label">课堂标题：</span>
+                <span class="info-val">{{ item.title }}</span>
+            </div>
+            <div class="info-line">
+                <span class="info-label">授课班级：</span>
+                <span class="info-val">{{ item.className }}</span>
+            </div>
+            <div class="info-line">
+                <span class="info-label">授课日期：</span>
+                <span class="info-val">{{ item.teachDate }}</span>
+            </div>
+            <div class="info-line">
+                <span class="info-label">上课节次：</span>
+                <span class="info-val">{{ item.classSection }}</span>
+            </div>
+            <div class="info-line">
+                <span class="info-label">教室地址：</span>
+                <span class="info-val">{{ item.address if item.address else "无" }}</span>
+            </div>
+            <div class="info-line">
+                <span class="info-label">课堂活动数：</span>
+                <span class="info-val">{{ item.activityCount }}</span>
+            </div>
+            <div class="info-line">
+                <span class="info-label">配套资源数：</span>
+                <span class="info-val">{{ item.resourceCount }}</span>
+            </div>
+            <div class="info-line">
+                <span class="info-label">课程唯一ID：</span>
+                <span class="info-val">{{ item.courseId }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-data">暂无课程数据</div>
+    {% endif %}
+</div>
+</body>
+</html>
