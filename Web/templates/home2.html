@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>课程管理主页</title>
+    <title>职教云易签到-课程管理主页</title>
     <style>
         * {
             margin: 0;
@@ -147,55 +147,106 @@
             padding: 60px 0;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
 <div class="container">
-
     <!-- 课程列表渲染区域 -->
     <h3 class="list-head">我的课堂课程列表</h3>
-    {% if course_list and course_list|length > 0 %}
-    <div class="course-grid">
-        {% for item in course_list %}
-        <div class="course-card">
-            <div class="course-name">{{ item.courseName }}</div>
-            <div class="info-line">
-                <span class="info-label">课堂标题：</span>
-                <span class="info-val">{{ item.title }}</span>
-            </div>
-            <div class="info-line">
-                <span class="info-label">授课班级：</span>
-                <span class="info-val">{{ item.className }}</span>
-            </div>
-            <div class="info-line">
-                <span class="info-label">授课日期：</span>
-                <span class="info-val">{{ item.teachDate }}</span>
-            </div>
-            <div class="info-line">
-                <span class="info-label">上课节次：</span>
-                <span class="info-val">{{ item.classSection }}</span>
-            </div>
-            <div class="info-line">
-                <span class="info-label">教室地址：</span>
-                <span class="info-val">{{ item.address if item.address else "无" }}</span>
-            </div>
-            <div class="info-line">
-                <span class="info-label">课堂活动数：</span>
-                <span class="info-val">{{ item.activityCount }}</span>
-            </div>
-            <div class="info-line">
-                <span class="info-label">配套资源数：</span>
-                <span class="info-val">{{ item.resourceCount }}</span>
-            </div>
-            <div class="info-line">
-                <span class="info-label">课程唯一ID：</span>
-                <span class="info-val">{{ item.courseId }}</span>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty-data">暂无课程数据</div>
-    {% endif %}
+    <!-- JS渲染容器 -->
+    <div class="course-grid" id="courseGrid"></div>
 </div>
+
+<script src="/static/js/fun.js"></script>
+<script>
+    // 获取容器
+    const gridBox = document.getElementById("courseGrid");
+
+    // 渲染函数
+    function renderCourseList(list) {
+        if (!list || list.length === 0) {
+            gridBox.innerHTML = '<div class="empty-data">暂无课程数据</div>';
+            return;
+        }
+        let htmlStr = "";
+        list.forEach(item => {
+            // 空地址处理
+            const addr = item.address ? item.address : "无";
+            htmlStr += `
+                <div class="course-card">
+                    <div class="course-name">${item.courseName}</div>
+                    <div class="info-line">
+                        <span class="info-label">课堂标题：</span>
+                        <span class="info-val">${item.title}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-label">授课班级：</span>
+                        <span class="info-val">${item.className}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-label">授课日期：</span>
+                        <span class="info-val">${item.teachDate}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-label">上课节次：</span>
+                        <span class="info-val">${item.classSection}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-label">教室地址：</span>
+                        <span class="info-val">${addr}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-label">课堂活动数：</span>
+                        <span class="info-val">${item.activityCount}</span>
+                    </div>
+                    <div class="info-line">
+                        <span class="info-label">配套资源数：</span>
+                        <span class="info-val">${item.resourceCount}</span>
+                    </div>
+                    <div style="margin-top:22px;text-align:center;">
+                        <button type="button" onclick="openCourseDetail('${item.id}')" style="
+                            padding: 10px 32px;
+                            background: #4158D0;
+                            color: #fff;
+                            border: none;
+                            border-radius: 8px;
+                            font-size: 15px;
+                            cursor: pointer;
+                        ">进入课堂</button>
+                    </div>
+                </div>
+            `;
+        });
+        gridBox.innerHTML = htmlStr;
+    }
+
+
+
+    // 授权凭证
+    const authValue = getCookie("authorization")
+    console.log('数据',authValue)
+
+
+    async function re_class_xr() {
+        let res = await axios.post("/api/get_classroom_list",{
+            authorization: authValue
+        })
+        console.log('课程列表',res.data)
+
+        // 页面加载执行渲染
+        renderCourseList(res.data);
+
+
+    }
+
+    re_class_xr()
+
+
+
+
+
+
+
+</script>
 </body>
 </html>

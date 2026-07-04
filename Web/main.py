@@ -1,3 +1,4 @@
+import code
 import json
 import time
 from flask import Flask, request, jsonify, send_from_directory, render_template, redirect
@@ -22,11 +23,11 @@ token_red_url = f"https://sso.icve.com.cn/sso/auth?mode=simple&source=2&redirect
 # 加载用户数据
 with open("DATA/userinfo1782827419.302329.json", "r", encoding="utf-8") as f:
     user_data_list = json.load(f)
-    print(user_data_list)
+    # print(user_data_list)
 
 # ================================ 工具 ================================
 
-
+temp_num = 0
 
 
 # ================================ 基础路由 ================================
@@ -62,18 +63,11 @@ def login_push():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    token = request.args.get('token')
-    if not token:
-        return render_template("login.html", token=token)
 
-    authorization = get_authorization(token)
-    if not authorization:
-        return redirect(token_red_url)
-    user = get_userinfo(token)
-    print(user)
-    name = user["nickName"]
-    return render_template("login.html", token=token, name=name)
+    # if request.cookies.get("authorization"):
+    #     return redirect(gw_url + "/home2")
 
+    return render_template("login.html")
 
 
 
@@ -130,6 +124,13 @@ def home():
     )
     ...
 
+@app.route('/home2', methods=['GET'])
+def home2():
+    # print(request.cookies.to_dict())
+
+    return render_template("home2.html")
+    ...
+
 
 @app.route('/course/detail', methods=['POST'])
 def course_detail():
@@ -152,6 +153,47 @@ def qr_code_check_in():
     print(jg)
     return "<h1>签到完成</h1><br><hr><h1>" + str(jg)+"</h2>"
 
+
+# ================================ API路由 ================================
+
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    qd_data = request.get_json()
+    print(qd_data)
+
+    # 判断用户是否存在
+    user = dict()
+    exists = False
+    for course in user_data_list:
+        if course["student_id"] == qd_data["studentId"]:
+            user = course
+            exists = True
+            break  # 找到直接跳出循环，不用继续遍历
+    print(exists)
+
+    if not exists:
+        return jsonify({
+            "code": 200,
+            "msg": "用户不存在"
+        })
+
+    authorization = get_authorization(user["token"][0])
+
+    return jsonify({
+        "code": 200,
+        "msg": "登录成功",
+        "authorization": authorization
+    })
+
+
+@app.route('/api/get_classroom_list', methods=['POST'])
+def api_get_classroom_list():
+    qd_data = request.get_json()
+    print(qd_data)
+
+    course_list = get_classroom_list(qd_data["authorization"], 12)
+    return jsonify(course_list)
 
 
 

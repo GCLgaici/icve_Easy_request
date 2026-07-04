@@ -38,6 +38,7 @@ def get_classroom_list(_authorization, size):
     }
     res = requests.get(url, headers=headers)
     rj = res.json()
+    # print(rj)
 
     return rj['rows']
 

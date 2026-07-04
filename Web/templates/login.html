@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>班级信息登记</title>
+    <title>职教云-易登录</title>
     <style>
         * {
             margin: 0;
@@ -103,10 +103,12 @@
             color: #2b6cb0;
         }
     </style>
+    <!-- 第一步：先加载axios，必须写在调用axios代码前面 -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
     <div class="card">
-        <h2 class="title">学生信息填写</h2>
+        <h2 class="title">ICVE-易签到 易登录</h2>
 
         {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -114,45 +116,75 @@
             {% endif %}
         {% endwith %}
 
-        <form id="infoForm" action="/home" method="post">
-            <!-- 后端传入Token，只读不可编辑 -->
-            <div class="form-item">
-                <label>访问凭证Token（系统自动生成）</label>
-                <input
-                    type="text"
-                    name="token"
-                    class="input-box token-input"
-                    value="{{ token }}"
-                    readonly
-                    tabindex="-1"
-                >
-            </div>
 
-            <!-- 姓名输入 -->
-            <div class="form-item">
-                <label for="username">输入你的姓名</label>
-                <input type="text" id="username" name="username" class="input-box"
-                       placeholder="请填写真实姓名" value="{{ name }}" required>
-            </div>
+        <!-- 学号 -->
+        <div class="form-item">
+            <label for="studentId">学号</label>
+            <input type="text" id="studentId" name="studentId" class="input-box"
+                   placeholder="学号" required tabindex="-1">
+        </div>
+        <div class="btn-group">
+            <button type="submit" class="submit-btn" id="submitBtn">登录</button>
+            <button type="reset" class="reset-btn" id="reset-btn">清空重填</button>
+        </div>
 
-            <!-- 班级下拉 -->
-            <div class="form-item">
-                <label for="className">选择班级</label>
-                <select id="className" name="className" class="select-box" required>
-                    <option value="" disabled selected>请选择所在班级</option>
-<!--                    <option value="101">高一（1）班</option>-->
-<!--                    <option value="102">高一（2）班</option>-->
-                    <option value="all">所有班级</option>
-
-                </select>
-            </div>
-
-            <div class="btn-group">
-                <button type="submit" class="submit-btn">提交进入</button>
-                <button type="reset" class="reset-btn">清空重填</button>
-            </div>
-        </form>
         <p class="tip">填写完成后点击提交即可</p>
     </div>
+
+
+
+    <!-- 第二步：再执行你的请求代码 -->
+    <script>
+        // 设置cookie，days有效期天数
+        function setCookie(name,value,days){
+            let date = new Date()
+            date.setTime(date.getTime() + days*24*60*60*1000)
+            document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/`
+        }
+        // 获取cookie
+        function getCookie(name){
+            let arr = document.cookie.split('; ')
+            for(let item of arr){
+                let kv = item.split('=')
+                if(kv[0] === name) return kv[1]
+            }
+            return ""
+        }
+
+
+        // 获取按钮元素
+        const btn = document.getElementById('submitBtn')
+        // 绑定点击事件
+        btn.addEventListener('click',async function(){
+            this.disabled = true
+            this.innerText = '进入中...'
+            try {
+                let student_id = document.getElementById('studentId').value
+                let res = await axios.post("/api/login",{
+                    studentId: 'fjlzy'+student_id
+                })
+                console.log('返回数据',res.data)
+                console.log('返回数据',res.data.authorization)
+                setCookie("authorization",res.data.authorization,3)
+                location.href = `/home2`;
+
+
+            }finally {
+                 // 无论成功失败，都解除锁定
+                this.disabled = false
+                this.innerText = '登录'
+            }
+
+        })
+
+        // 获取按钮元素
+        const qk_btn = document.getElementById('reset-btn')
+        // 绑定点击事件
+        qk_btn.addEventListener('click',async function(){
+
+            document.getElementById('studentId').value = "";
+            console.log('qk')
+        })
+    </script>
 </body>
 </html>
