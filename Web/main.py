@@ -1,8 +1,11 @@
 import code
 import json
+import threading
 import time
 from flask import Flask, request, jsonify, send_from_directory, render_template, redirect
 from flask_sock import Sock
+from werkzeug import run_simple
+
 from Web.requests_ICVE import get_authorization,get_classroom_list,get_userinfo,get_course_detail_list, scan_to_check_in
 
 
@@ -13,7 +16,6 @@ from Web.requests_ICVE import get_authorization,get_classroom_list,get_userinfo,
 # ================================ 初始化Flask应用 ================================
 app = Flask(__name__)
 sock = Sock(app)
-HOST = '0.0.0.0'
 PORT = 8989
 gw_url = "https://icve.052024.xyz"
 token_red_url = f"https://sso.icve.com.cn/sso/auth?mode=simple&source=2&redirect={gw_url}"
@@ -33,7 +35,9 @@ temp_num = 0
 # ================================ 基础路由 ================================
 @app.route('/')
 def index():
-    return 'null'
+    client_ip = request.remote_addr
+    print(client_ip)
+    return 'null | IP:'+ str(client_ip)
 
 
 @app.route('/login_push', methods=['GET', 'POST'])
@@ -200,11 +204,15 @@ def api_get_classroom_list():
 
 
 # ================================ 启动服务 ================================
+
 if __name__ == '__main__':
     # print(">> https://sso.icve.com.cn/sso/auth?mode=simple&source=2&redirect=http://localhost:8080/login")
     # print()
 
     print(f"https://icve.052024.xyz/login_push")
-    app.run(host=HOST, port=PORT, debug=True)
+    print(f"http://v6.icve.052024.xyz:8989/login_push")
+    print(f"http://v6.icve.052024.xyz:8989/login")
+    from waitress import serve
+    serve(app, listen=[f"0.0.0.0:{PORT}", f"[::]:{PORT}"])
 
 
